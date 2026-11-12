@@ -30,8 +30,12 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (.env holds your PC's address; copy .env.example to .env)
+.env
 .env*.local
+
+# Claude Code local settings
+.claude/
 
 # typescript
 *.tsbuildinfo
