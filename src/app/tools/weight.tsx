@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Button, Card, Field, Notice, SpeakButton, TopBar, Txt } from '@/components/ui'
+import { Button, Card, Field, Notice, TopBar, Txt } from '@/components/ui'
+import { ListenText } from '@/components/listen-text'
 import { Choice, ChoiceGroup, digitsOnly } from '@/components/sell-parts'
 import { estimateWeightKg, formatPrice, KG_PER_MAUND } from '@/lib/format'
 import { colors } from '@/theme'
@@ -29,7 +30,8 @@ export default function WeightCalculator() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <TopBar title="فیتے سے وزن" onBack={back} right={<SpeakButton text={HOW_TO} />} />
+      <ListenText text={HOW_TO} />
+      <TopBar title="فیتے سے وزن" onBack={back} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Card style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

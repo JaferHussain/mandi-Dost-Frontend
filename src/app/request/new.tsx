@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Button, Field, Loading, Notice, SpeakButton, TopBar, Txt, type IconName } from '@/components/ui'
+import { Button, Field, Loading, Notice, TopBar, Txt, type IconName } from '@/components/ui'
+import { ListenText } from '@/components/listen-text'
+import { takeVoiceDraft } from '@/lib/voice-draft'
+import { requestPatchFromVoice } from '@/lib/voice-apply'
 import { RequireLogin } from '@/components/require-login'
 import { Choice, ChoiceGroup, digitsOnly, Tile, Toggle } from '@/components/sell-parts'
 import { api, type Business, type Category, type Frequency, type PriceUnit, type Purpose, type QuantityUnit, type Section } from '@/lib/api'
@@ -28,7 +31,8 @@ const NEEDED_BY = [
 const SPEECH = 'یہاں بتائیں آپ کو کیا چاہیے، کتنا چاہیے، اور کتنی بار چاہیے۔ بیچنے والے آپ کو پیشکش بھیجیں گے اور آپ ان کو کال کر سکیں گے۔'
 
 export default function NewRequest() {
-  const params = useLocalSearchParams<{ section?: string; purpose?: string }>()
+  const params = useLocalSearchParams<{ section?: string; purpose?: string; voice?: string }>()
+  const [voiceFilled, setVoiceFilled] = useState(false)
   const { user, location, locations } = useSession()
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [business, setBusiness] = useState<Business | null>(null)
@@ -53,6 +57,21 @@ export default function NewRequest() {
     api.categories().then(setCategories, (e) => setError(errorMessage(e)))
     if (user) api.myBusiness().then(setBusiness).catch(() => {})
   }, [user])
+
+  // Sent here by the voice assistant: fill the form with what was understood. The user still checks it and presses the button.
+  useEffect(() => {
+    if (!params.voice || !categories) return
+    const v = takeVoiceDraft()
+    router.setParams({ voice: '' })
+    const c = v && categories.find((x) => x.id === v.categoryId)
+    if (!v || !c) return
+    const p = requestPatchFromVoice(v, c)
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setSection(p.section); setCategoryId(p.categoryId); setPurpose(p.purpose); setQuantity(p.quantity); setUnit(p.unit)
+    setMinW(p.minW); setMaxW(p.maxW); setFrequency(p.frequency); setPrice(p.price); setPriceUnit(p.priceUnit); setLocationId(p.locationId)
+    setVoiceFilled(true)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [params.voice, categories])
 
   if (!user) {
     return (
@@ -110,8 +129,12 @@ export default function NewRequest() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <TopBar title="اپنی ضرورت بتائیں" onBack={close} right={<SpeakButton text={SPEECH} />} />
+      <ListenText text={SPEECH} />
+      <TopBar title="اپنی ضرورت بتائیں" onBack={close} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        {voiceFilled && (
+          <Notice tone="success" icon="microphone" text="آپ کی آواز سے معلومات بھر دی گئی ہیں۔ دیکھ لیں، ٹھیک کر لیں، پھر 'ضرورت لگائیں' دبائیں۔ اس سے پہلے کچھ نہیں لگتا" />
+        )}
         {!business && params.purpose === 'meatSupply' && (
           <Notice icon="store-outline" text="ہوٹل یا دکان ہے؟ پروفائل میں اپنے کاروبار کا نام لکھیں، بیچنے والے زیادہ بھروسہ کرتے ہیں" />
         )}

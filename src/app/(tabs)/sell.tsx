@@ -3,7 +3,11 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type Scro
 import { router, useLocalSearchParams } from 'expo-router'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Button, Card, Field, Loading, Notice, SpeakButton, Txt, type IconName } from '@/components/ui'
+import { Button, Card, Field, Loading, Notice, Txt, type IconName } from '@/components/ui'
+import { HeaderAssist } from '@/components/assist'
+import { useListen } from '@/lib/listen'
+import { takeVoiceDraft } from '@/lib/voice-draft'
+import { sellPatchFromVoice, sellStartStep } from '@/lib/voice-apply'
 import { RequireLogin } from '@/components/require-login'
 import { Choice, ChoiceGroup, digitsOnly, PhotoGrid, pickPhotos, Tile, Toggle, toUpload, type Photo } from '@/components/sell-parts'
 import {
@@ -131,7 +135,8 @@ export default function Sell() {
   const [busy, setBusy] = useState<string | null>(null)
   const scroll = useRef<ScrollViewInstance>(null)
   // Editing an existing listing: ?edit=<id>
-  const { edit, weight: weightParam } = useLocalSearchParams<{ edit?: string; weight?: string }>()
+  const { edit, weight: weightParam, voice } = useLocalSearchParams<{ edit?: string; weight?: string; voice?: string }>()
+  const [voiceFilled, setVoiceFilled] = useState(false)
   const editId = edit ? Number(edit) : null
   const [editing, setEditing] = useState<ListingDetail | null>(null)
   const [keptPhotos, setKeptPhotos] = useState<Media[]>([])
@@ -149,6 +154,24 @@ export default function Sell() {
       setStepIndex(0)
     }, (e) => setError(errorMessage(e)))
   }, [editId])
+
+  // Sent here by the voice assistant: fill the form with what was understood. The user still checks every step and presses publish.
+  useEffect(() => {
+    if (!voice || !categories) return
+    const v = takeVoiceDraft()
+    router.setParams({ voice: '' })
+    const c = v && categories.find((x) => x.id === v.categoryId)
+    if (!v || !c) return
+    const patch = sellPatchFromVoice(v, c)
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setEditing(null)
+    setKeptPhotos([])
+    if (editId) router.setParams({ edit: '' })
+    setDraft({ ...EMPTY, ...patch })
+    setStepIndex(sellStartStep(patch))
+    setVoiceFilled(true)
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [voice, categories, editId])
 
   // Coming back from the tape-measure calculator with an estimated weight
   useEffect(() => {
@@ -173,6 +196,7 @@ export default function Sell() {
     [draft.section],
   )
   const step = steps[Math.min(stepIndex, steps.length - 1)]
+  useListen(`${t(STEP_TITLE[step])}۔ ${t(STEP_SPEECH[step])}`)
   const set = (patch: Partial<Draft>) => {
     setError(null)
     setDraft((d) => ({ ...d, ...patch }))
@@ -181,7 +205,10 @@ export default function Sell() {
   if (!user) {
     return (
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, gap: 14 }}>
-        <Txt bold size={24}>بیچیں</Txt>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Txt bold size={24} style={{ flex: 1 }}>بیچیں</Txt>
+          <HeaderAssist fallback="بیچیں" />
+        </View>
         <RequireLogin icon="storefront-outline" title="اشتہار لگانے کے لیے لاگ اِن کریں" text="ایک ہی اکاؤنٹ سے خرید بھی سکتے ہیں اور بیچ بھی سکتے ہیں" />
       </ScrollView>
     )
@@ -328,6 +355,7 @@ export default function Sell() {
       await api.publishListing(created.id)
       setDraft(EMPTY)
       setStepIndex(0)
+      setVoiceFilled(false)
       router.push({ pathname: '/listing/[id]', params: { id: String(created.id) } })
     } catch (e) {
       // If the listing was created but a photo or publishing failed, it stays as a draft in "My listings".
@@ -348,7 +376,7 @@ export default function Sell() {
             {editing && <Txt size={13} color={colors.earth} numberOfLines={1}>{`${t('بدل رہے ہیں')}: ${editing.title}`}</Txt>}
           </View>
           {editing && <Button label="چھوڑیں" icon="close" variant="outline" onPress={stopEditing} />}
-          <SpeakButton text={STEP_SPEECH[step]} />
+          <HeaderAssist fallback={STEP_TITLE[step]} />
         </View>
         <View style={styles.progress}>
           <View style={[styles.progressFill, { width: `${((stepIndex + 1) / steps.length) * 100}%` }]} />
@@ -356,6 +384,9 @@ export default function Sell() {
       </View>
 
       <ScrollView ref={scroll} contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        {voiceFilled && (
+          <Notice tone="success" icon="microphone" text="آپ کی آواز سے معلومات بھر دی گئی ہیں۔ ہر قدم پر دیکھ لیں اور ٹھیک کر لیں۔ اشتہار تب ہی لگے گا جب آپ آخر میں 'اشتہار لگائیں' دبائیں گے" />
+        )}
         {step === 'category' && (
           <>
             <View style={styles.grid}>

@@ -5,6 +5,7 @@ import { Image } from 'expo-image'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Card, EmptyState, Loading, Notice, SpeakButton, TopBar, Txt, type IconName } from '@/components/ui'
+import { ListenText } from '@/components/listen-text'
 import { ReportSheet } from '@/components/report-sheet'
 import { SharesPanel } from '@/components/shares-panel'
 import { PosterSheet } from '@/components/poster'
@@ -91,6 +92,7 @@ export default function ListingScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      <ListenText text={speech} />
       <TopBar
         title={l.category.nameUr}
         onBack={back}

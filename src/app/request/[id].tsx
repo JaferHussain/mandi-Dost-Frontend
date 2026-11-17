@@ -3,7 +3,8 @@ import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, 
 import { router, useLocalSearchParams } from 'expo-router'
 import { Image } from 'expo-image'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Button, Card, EmptyState, Field, Loading, Notice, SpeakButton, TopBar, Txt, type IconName } from '@/components/ui'
+import { Button, Card, EmptyState, Field, Loading, Notice, TopBar, Txt, type IconName } from '@/components/ui'
+import { ListenText } from '@/components/listen-text'
 import { RequireLogin } from '@/components/require-login'
 import { Choice, ChoiceGroup, digitsOnly } from '@/components/sell-parts'
 import { api, mediaUrl, type ListingSummary, type Offer, type PriceUnit, type RequestDetail } from '@/lib/api'
@@ -90,7 +91,8 @@ export default function RequestScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <TopBar title="ضرورت" onBack={back} right={<SpeakButton text={speech} />} />
+      <ListenText text={speech} />
+      <TopBar title="ضرورت" onBack={back} />
       <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Card style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

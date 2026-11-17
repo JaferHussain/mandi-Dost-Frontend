@@ -6,6 +6,10 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useFonts, NotoNastaliqUrdu_400Regular, NotoNastaliqUrdu_700Bold } from '@expo-google-fonts/noto-nastaliq-urdu'
 import { SessionProvider, useSession } from '@/lib/session'
+import { AssistantProvider } from '@/lib/assistant'
+import { NotificationsProvider } from '@/lib/notifications'
+import { NotificationPopup } from '@/components/notification-popup'
+import { VoiceAssistant } from '@/components/voice-assistant'
 import { FirstLaunchLanguage } from '@/components/language'
 import { colors } from '@/theme'
 
@@ -20,7 +24,11 @@ export default function RootLayout() {
       {/* The whole app is right-to-left (Urdu, Punjabi and Saraiki all use Arabic script). */}
       <View style={{ flex: 1, direction: 'rtl', backgroundColor: colors.cream }}>
         <StatusBar style="dark" />
-        <SessionProvider>{fontsReady && <AppRoutes />}</SessionProvider>
+        <SessionProvider>
+          <AssistantProvider>
+            <NotificationsProvider>{fontsReady && <AppRoutes />}</NotificationsProvider>
+          </AssistantProvider>
+        </SessionProvider>
       </View>
     </SafeAreaProvider>
   )
@@ -38,6 +46,7 @@ function AppRoutes() {
 
   return (
     // key={lang}: remount every screen so all text switches language at once.
+    <>
     <Stack key={lang} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.cream } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" options={{ presentation: 'modal' }} />
@@ -56,6 +65,12 @@ function AppRoutes() {
       <Stack.Screen name="tools/weight" />
       <Stack.Screen name="my-bookings" />
       <Stack.Screen name="admin" />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="notification-settings" />
     </Stack>
+    {/* Always on top of every screen: alerts that arrive while the app is open, and the "speak to the app" sheet */}
+    <NotificationPopup />
+    <VoiceAssistant />
+    </>
   )
 }

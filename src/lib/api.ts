@@ -157,6 +157,30 @@ export type RequestQuery = {
 }
 
 /** Photos are served by the API at relative paths like /media/listings/1/x.jpg. */
+// ---- Notifications and voice ----------------------------------------------
+
+export type NotificationType =
+  | 'nearbyListing' | 'nearbyRequest' | 'offerReceived' | 'offerAccepted' | 'offerDeclined'
+  | 'bookingRequested' | 'bookingConfirmed' | 'bookingDeclined'
+export type AppNotification = {
+  id: number; type: NotificationType; listingId: number | null; requestId: number | null; subject: string
+  place: string | null; distanceKm: number | null; count: number | null; amount: number | null; createdAtUtc: string; isRead: boolean
+}
+export type NotificationList = { items: AppNotification[]; unreadCount: number }
+export type NotificationSettings = { enabled: boolean; wantListings: boolean; wantRequests: boolean; radiusKm: number; categoryIds: number[] }
+
+export type VoiceIntent = 'unknown' | 'sell' | 'wanted' | 'search'
+/** What the server understood from a spoken or typed sentence. Only suggestions: the user checks them in the form. */
+export type VoiceParse = {
+  intent: VoiceIntent; transcript: string
+  categoryId: number | null; categorySlug: string | null; section: Section | null; purposes: Purpose[]
+  gender: Gender | null; teeth: Teeth | null; breed: string | null; ageMonths: number | null
+  weightKg: number | null; minWeightKg: number | null; maxWeightKg: number | null
+  quantity: number | null; quantityUnit: QuantityUnit | null; price: number | null; priceUnit: PriceUnit | null
+  shares: number | null; frequency: Frequency | null; locationId: number | null
+  isPregnant: boolean | null; isVaccinated: boolean | null; milkLitresPerDay: number | null; missing: string[]
+}
+
 export const mediaUrl = (path: string | null | undefined) => (path ? `${API_URL}${path}` : null)
 export type Profile = {
   bio: string | null; avatarUrl: string | null; location: Location | null; whatsAppNumber: string | null
@@ -391,6 +415,20 @@ export const api = {
   adminReports: () => request<AdminReport[]>('/api/admin/reports', { auth: true }),
   resolveReport: (id: number, hideListing: boolean, note?: string) =>
     request<AdminReport>(`/api/admin/reports/${id}/resolve`, { method: 'POST', body: { hideListing, note }, auth: true }),
+  // Notifications
+  notifications: (opts: { afterId?: number; beforeId?: number; pageSize?: number } = {}) =>
+    request<NotificationList>(`/api/notifications?${toQuery(opts)}`, { auth: true }),
+  markNotificationRead: (id: number) => request<void>(`/api/notifications/${id}/read`, { method: 'POST', auth: true }),
+  markAllNotificationsRead: () => request<void>('/api/notifications/read-all', { method: 'POST', auth: true }),
+  notificationSettings: () => request<NotificationSettings>('/api/users/me/notification-settings', { auth: true }),
+  saveNotificationSettings: (s: NotificationSettings) =>
+    request<NotificationSettings>('/api/users/me/notification-settings', { method: 'PUT', body: s, auth: true }),
+
+  // Voice
+  voiceParse: (text: string) => request<VoiceParse>('/api/voice/parse', { method: 'POST', body: { text } }),
+  voiceStatus: () => request<{ speechRecognition: boolean }>('/api/voice/status'),
+  transcribe: (file: UploadFile, language: 'ur' | 'pa' = 'ur') => requestForm<{ text: string }>('/api/voice/transcribe', file, { language }),
+
   pendingBusinesses: () => request<Business[]>('/api/admin/businesses/pending', { auth: true }),
   decideBusiness: (id: number, approve: boolean, note?: string) =>
     request<Business>(`/api/admin/businesses/${id}/verification`, { method: 'POST', body: { approve, note }, auth: true }),

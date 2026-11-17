@@ -5,6 +5,8 @@ import { Image } from 'expo-image'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { EmptyState, Loading, Notice, Txt } from '@/components/ui'
+import { HeaderAssist } from '@/components/assist'
+import { useListen } from '@/lib/listen'
 import { RequireLogin } from '@/components/require-login'
 import { api, mediaUrl, type ChatSummary } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
@@ -20,6 +22,7 @@ export default function Messages() {
   const [chats, setChats] = useState<ChatSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  useListen(user ? t('پیغامات۔ خریدار اور بیچنے والوں سے آپ کی بات چیت یہاں ہے') : t('پیغامات دیکھنے کے لیے لاگ اِن کریں'))
 
   const load = useCallback(async () => {
     try {
@@ -43,7 +46,10 @@ export default function Messages() {
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top + 12 }}>
-      <Txt bold size={24} style={{ paddingHorizontal: 16 }}>پیغامات</Txt>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 8 }}>
+        <Txt bold size={24} style={{ flex: 1 }}>پیغامات</Txt>
+        <HeaderAssist fallback="پیغامات" />
+      </View>
       {!user ? (
         <View style={{ padding: 16 }}>
           <RequireLogin icon="message-text-outline" title="پیغامات دیکھنے کے لیے لاگ اِن کریں" text="خریدار اور بیچنے والے یہاں بات کریں گے" />

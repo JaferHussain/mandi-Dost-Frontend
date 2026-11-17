@@ -4,11 +4,14 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Card, Num, Txt, type IconName } from '@/components/ui'
+import { HeaderAssist } from '@/components/assist'
+import { useListen } from '@/lib/listen'
+import { useNotifications } from '@/lib/notifications'
 import { RequireLogin } from '@/components/require-login'
 import { LanguageSheet } from '@/components/language'
 import { LocationSheet } from '@/components/location'
 import { useSession } from '@/lib/session'
-import { LANGUAGES } from '@/i18n'
+import { LANGUAGES, t } from '@/i18n'
 import { colors } from '@/theme'
 
 /** +923001234567 → 0300-1234567 (how people write numbers in Pakistan) */
@@ -20,10 +23,15 @@ export default function Profile() {
   const [langOpen, setLangOpen] = useState(false)
   const [cityOpen, setCityOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const { unread } = useNotifications()
+  useListen(user ? `${user.fullName}۔ ${t('آپ کے اشتہار، پسندیدہ، ضرورتیں، پیشکشیں اور اطلاعات یہاں ہیں')}` : t('اکاؤنٹ بنانے یا لاگ اِن کرنے کے لیے نیچے بٹن دبائیں'))
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, gap: 14 }}>
-      <Txt bold size={24}>پروفائل</Txt>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Txt bold size={24} style={{ flex: 1 }}>پروفائل</Txt>
+        <HeaderAssist fallback="پروفائل" />
+      </View>
 
       {user ? (
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
@@ -49,6 +57,7 @@ export default function Profile() {
 
       {user && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <Row icon="bell-outline" label="اطلاعات" value={unread > 0 ? `${unread} ${t('نئی')}` : ''} onPress={() => router.push('/notifications')} />
           <Row icon="clipboard-list-outline" label="میرے اشتہار" value="" onPress={() => router.push('/my-listings')} />
           <Row icon="heart-outline" label="پسندیدہ" value="" onPress={() => router.push('/favorites')} />
           <Row icon="bullhorn-outline" label="میری ضرورتیں" value="" onPress={() => router.push('/my-requests')} />

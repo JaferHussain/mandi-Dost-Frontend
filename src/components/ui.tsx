@@ -1,13 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import * as Speech from 'expo-speech'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, fonts, lineHeightFor, radius, touch } from '../theme'
 import { t } from '../i18n'
+import { speak, stopSpeaking, useSpeaking } from '../lib/listen'
+import { HeaderAssist } from './assist'
 
 export type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name']
 
@@ -82,23 +83,8 @@ const BUTTON_VARIANTS = {
 
 /** Yellow "سنیں" button: reads the text aloud in Urdu for users who don't read. */
 export function SpeakButton({ text, style }: { text: string; style?: StyleProp<ViewStyle> }) {
-  const [speaking, setSpeaking] = useState(false)
-  useEffect(() => () => void Speech.stop(), [])
-  const toggle = () => {
-    if (speaking) {
-      Speech.stop()
-      setSpeaking(false)
-      return
-    }
-    setSpeaking(true)
-    Speech.speak(t(text), {
-      language: 'ur-PK',
-      rate: 0.9,
-      onDone: () => setSpeaking(false),
-      onStopped: () => setSpeaking(false),
-      onError: () => setSpeaking(false),
-    })
-  }
+  const speaking = useSpeaking()
+  const toggle = () => (speaking ? stopSpeaking() : speak(text))
   return (
     <Pressable onPress={toggle} accessibilityRole="button" accessibilityLabel={t('سنیں')} style={[styles.speak, style]}>
       <MaterialCommunityIcons name={speaking ? 'stop' : 'volume-high'} size={22} color={colors.ink} />
@@ -164,8 +150,8 @@ const NOTICE = {
   success: { bg: colors.brand50, border: colors.brand200, fg: colors.brand800, icon: 'check-circle-outline' as IconName },
 }
 
-/** Plain top bar for inner screens. */
-export function TopBar({ title, onBack, right }: { title: string; onBack?: () => void; right?: ReactNode }) {
+/** Plain top bar for inner screens. Always has the Listen and Speak buttons, so every page can be heard and talked to. */
+export function TopBar({ title, onBack, right, hideAssist }: { title: string; onBack?: () => void; right?: ReactNode; hideAssist?: boolean }) {
   const insets = useSafeAreaInsets()
   return (
     <View style={[styles.topBar, { paddingTop: insets.top + 6 }]}>
@@ -177,6 +163,7 @@ export function TopBar({ title, onBack, right }: { title: string; onBack?: () =>
       )}
       <Txt bold size={20} style={{ flex: 1 }} numberOfLines={1}>{title}</Txt>
       {right}
+      {!hideAssist && <HeaderAssist fallback={title} />}
     </View>
   )
 }

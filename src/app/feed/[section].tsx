@@ -7,16 +7,19 @@ import { ListingFeed } from '@/components/listing-feed'
 import { PagedList } from '@/components/paged-list'
 import { RequestCard } from '@/components/request-card'
 import { Button } from '@/components/ui'
+import { useListen } from '@/lib/listen'
 import { ANIMAL_ICONS, getSection, SECTION_QUERY, type SectionId } from '@/data/sections'
 import { api, type Category, type ListingQuery, type Purpose, type RequestQuery, type RequestSummary } from '@/lib/api'
 import { useSession } from '@/lib/session'
 import { colors, radius } from '@/theme'
+import { t } from '@/i18n'
 
 type Sort = NonNullable<ListingQuery['sort']>
 
 export default function FeedScreen() {
   const { section: sectionId, category, tab: tabParam } = useLocalSearchParams<{ section: string; category?: string; tab?: string }>()
   const section = getSection(sectionId)
+  useListen(section ? `${t(section.title)}۔ ${t(section.subtitle)}` : null)
   const { location } = useSession()
   const [categories, setCategories] = useState<Category[]>([])
   // Nearest first when we know the user's city; otherwise newest first.

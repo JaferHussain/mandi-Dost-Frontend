@@ -4,6 +4,9 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Field, Loading, Notice, Txt } from '@/components/ui'
+import { HeaderAssist } from '@/components/assist'
+import { useAssistant } from '@/lib/assistant'
+import { useListen } from '@/lib/listen'
 import { api, type Category } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
 import { ANIMAL_ICONS, SECTIONS } from '@/data/sections'
@@ -15,6 +18,15 @@ export default function Explore() {
   const [q, setQ] = useState('')
   const [categories, setCategories] = useState<Category[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { open: openAssistant } = useAssistant()
+  useListen('تلاش۔ نیچے جانور کی قسم چنیں، یا اوپر مائیک دبا کر بولیں کہ کیا ڈھونڈنا ہے۔ مثلاً: میرے قریب بھینس دکھاؤ')
+
+  // Old links (?voice=1) open the speak-to-the-app sheet
+  useEffect(() => {
+    if (voice !== '1') return
+    openAssistant()
+    router.setParams({ voice: '' })
+  }, [voice, openAssistant])
 
   const load = useCallback(async () => {
     setError(null)
@@ -30,12 +42,13 @@ export default function Explore() {
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: insets.top + 12, gap: 14 }} keyboardShouldPersistTaps="handled">
-      <Txt bold size={24}>تلاش</Txt>
-      <Field label="کیا ڈھونڈ رہے ہیں؟" placeholder="مثلاً: بیتل بکرا، ساہیوال گائے، گندم" icon="magnify" value={q} onChangeText={setQ} returnKeyType="search" />
-      {voice === '1' && (
-        <Notice text="بول کر تلاش ایپ کے اگلے ورژن میں آئے گی۔ ابھی لکھ کر تلاش کریں" icon="microphone-off" />
-      )}
-      {q.trim().length > 0 && <Notice text="اشتہارات میں تلاش اگلے مرحلے میں سرور سے جوڑی جائے گی" />}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Txt bold size={24} style={{ flex: 1 }}>تلاش</Txt>
+        <HeaderAssist fallback="تلاش" />
+      </View>
+      <Field label="کیا ڈھونڈ رہے ہیں؟" placeholder="مثلاً: بیتل بکرا، ساہیوال گائے، گندم" icon="magnify" value={q} onChangeText={setQ} returnKeyType="search"
+        onSubmitEditing={() => q.trim() && openAssistant(q.trim())} />
+      {q.trim().length > 0 && <Button label="سمجھیں اور تلاش کریں" icon="magnify" onPress={() => openAssistant(q.trim())} />}
 
       <Txt bold size={18}>جانوروں کی قسمیں</Txt>
       {error ? (

@@ -4,6 +4,10 @@ import { router, useFocusEffect } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, EmptyState, Loading, SpeakButton, Txt } from '@/components/ui'
+import { ListenButton } from '@/components/assist'
+import { Bell } from '@/components/bell'
+import { useAssistant } from '@/lib/assistant'
+import { useListen } from '@/lib/listen'
 import { ListingCard } from '@/components/listing-card'
 import { api, type ListingSummary } from '@/lib/api'
 import { LocationSheet } from '@/components/location'
@@ -21,6 +25,8 @@ export default function Home() {
   const { location, lang, setLang } = useSession()
   const [cityOpen, setCityOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
+  const { open: openAssistant } = useAssistant()
+  useListen(HOME_GUIDE)
   const langName = LANGUAGES.find((l) => l.id === lang)?.name ?? 'اردو'
 
   return (
@@ -29,6 +35,8 @@ export default function Home() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <Txt bold size={24} color={colors.white} style={{ flex: 1 }}>منڈی دوست</Txt>
+          <Bell light />
+          <ListenButton fallback={HOME_GUIDE} />
           <Pressable onPress={() => setLangOpen(true)} style={styles.chip} accessibilityRole="button" accessibilityLabel={langName}>
             <MaterialCommunityIcons name="translate" size={20} color={colors.white} />
             <Txt bold size={14} color={colors.white}>{langName}</Txt>
@@ -46,7 +54,7 @@ export default function Home() {
             <MaterialCommunityIcons name="magnify" size={26} color={colors.muted} />
             <Txt size={16} color={colors.muted}>آپ کیا خریدنا چاہتے ہیں؟</Txt>
           </Pressable>
-          <Pressable onPress={() => router.navigate({ pathname: '/explore', params: { voice: '1' } })} style={styles.mic} accessibilityRole="button" accessibilityLabel="بول کر تلاش کریں">
+          <Pressable onPress={() => openAssistant()} style={styles.mic} accessibilityRole="button" accessibilityLabel="بول کر بتائیں">
             <MaterialCommunityIcons name="microphone" size={28} color={colors.ink} />
           </Pressable>
         </View>
