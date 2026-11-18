@@ -188,6 +188,32 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   )
 }
 
+/** Centred popup for important messages (e.g. "this number is already registered"), with a Listen button. */
+export function Popup({ open, onClose, title, text, tone = 'error', actions }: {
+  open: boolean; onClose: () => void; title: string; text: string; tone?: 'error' | 'info'; actions?: ReactNode
+}) {
+  const c = NOTICE[tone]
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.popupWrap}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('بند کریں')} />
+        <View style={styles.popup} accessibilityRole="alert">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <MaterialCommunityIcons name={c.icon} size={30} color={c.fg} />
+            <Txt bold size={18} color={c.fg} style={{ flex: 1 }}>{title}</Txt>
+            <SpeakButton text={`${t(title)}۔ ${t(text)}`} />
+          </View>
+          <Txt size={16}>{text}</Txt>
+          <View style={{ gap: 10 }}>
+            {actions}
+            <Button label="ٹھیک ہے" variant={actions ? 'outline' : 'primary'} onPress={onClose} />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
 export function Loading({ label = 'لوڈ ہو رہا ہے…' }: { label?: string }) {
   return (
     <View style={{ padding: 32, alignItems: 'center', gap: 8 }}>
@@ -235,6 +261,8 @@ const styles = StyleSheet.create({
   },
   iconBtn: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  popupWrap: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 16 },
+  popup: { backgroundColor: colors.white, borderRadius: radius.lg, padding: 20, gap: 14, width: '100%', maxWidth: 440, alignSelf: 'center' },
   sheet: {
     backgroundColor: colors.cream, borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingHorizontal: 16, paddingTop: 8, maxHeight: '85%',

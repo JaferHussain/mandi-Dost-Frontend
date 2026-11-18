@@ -2,7 +2,17 @@ import { getItem, setItem } from './storage'
 
 // Base URL of the .NET API. Set EXPO_PUBLIC_API_URL in mobile/.env.
 // A phone cannot reach "localhost" on the PC, so use the PC's Wi-Fi IP.
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5080').replace(/\/$/, '')
+export const API_URL = resolveApiUrl((process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5080').replace(/\/$/, ''))
+
+// In the browser preview the page and the API run on the same PC. If the configured address is a
+// local-network IP (which changes whenever the PC joins another Wi-Fi), use the page's own host instead,
+// so the preview keeps working. Real server addresses (https://…) are left alone.
+function resolveApiUrl(url: string): string {
+  const loc = typeof window !== 'undefined' ? window.location : undefined
+  if (!loc?.hostname) return url
+  const m = /^http:\/\/(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.exec(url)
+  return m ? `http://${loc.hostname}${m[3] ?? ''}` : url
+}
 
 // ---- Types matching the backend DTOs ------------------------------------
 
@@ -326,7 +336,7 @@ async function requestForm<T>(path: string, photo: UploadFile, fields: Record<st
 // ---- Endpoints -----------------------------------------------------------
 
 export const api = {
-  async register(input: { fullName: string; phoneNumber: string; password: string; locationId?: number; preferredLanguage?: string }) {
+  async register(input: { fullName: string; phoneNumber: string; password: string; cnic?: string; locationId?: number; preferredLanguage?: string }) {
     const data = await request<AuthResponse>('/api/auth/register', { method: 'POST', body: input })
     await saveTokens(data.accessToken, data.refreshToken)
     return data.user

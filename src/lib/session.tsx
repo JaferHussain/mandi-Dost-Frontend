@@ -13,7 +13,7 @@ type Session = {
   setLang: (id: LangId) => void
   setLocation: (loc: Location) => void
   login: (phone: string, password: string) => Promise<void>
-  register: (input: { fullName: string; phoneNumber: string; password: string }) => Promise<void>
+  register: (input: { fullName: string; phoneNumber: string; password: string; cnic?: string }) => Promise<void>
   logout: () => Promise<void>
   reloadLocations: () => Promise<void>
 }
